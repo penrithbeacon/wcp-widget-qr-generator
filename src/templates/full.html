@@ -78,7 +78,7 @@
       if (d.status !== 'Success') throw new Error(d.error || 'Error');
       qrImg.src = `data:image/png;base64,${d.base64Image}`;
       qrArea.style.display = dlRow.style.display = 'block';
-    } catch(e) {
+    } catch (e) {
       errEl.textContent = e.message;
       errEl.style.display = 'block';
     } finally {
@@ -96,6 +96,19 @@
     a.href = qrImg.src;
     a.download = 'qr-code.png';
     a.click();
+  });
+
+  // Auto-generate from URL params (passed by compact widget)
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const text   = params.get('text');
+    const size   = params.get('size');
+    if (text) {
+      textEl.value = text;
+      if (size) sizeEl.value = Math.max(50, Math.min(2000, parseInt(size) || 400));
+      textEl.dispatchEvent(new Event('input'));
+      btnGen.click();
+    }
   });
 </script>
 </body>
