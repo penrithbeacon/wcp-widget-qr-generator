@@ -3,113 +3,244 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Generator — Full Size</title>
-  <link rel="stylesheet" href="/widget/static/style.css">
+  <title>QR Code Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --surface2:#1c2128;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #f0883e;
+      --red:     #f85149;
+      --blue:    #58a6ff;
+      --radius:  8px;
+      --shadow:  0 4px 16px rgba(0,0,0,.45);
+    }
+
+    html { background: var(--bg); color: var(--text);
+           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+    header {
+      position: fixed; top: 38px; left: 0; right: 0; height: 56px; z-index: 100;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; padding: 0 20px;
+    }
+    .header-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .header-icon svg { width: 16px; height: 16px; fill: #0d1117; }
+    .header-title   { font-size: 15px; font-weight: 600; color: var(--text); }
+    .header-version {
+      font-size: 11px; color: var(--muted);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 7px;
+    }
+
+    main {
+      padding: 114px 20px 40px;
+      max-width: 740px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-header {
+      padding: 12px 20px; border-bottom: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .card-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+    textarea, input[type="number"] {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: inherit; font-size: 13px; padding: 10px 12px; width: 100%;
+      transition: border-color .15s; resize: vertical;
+    }
+    textarea { min-height: 90px; }
+    input[type="number"] { width: 120px; }
+    textarea:focus, input[type="number"]:focus { outline: none; border-color: var(--accent); }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    .size-row { display: flex; align-items: center; gap: 12px; }
+    .size-row label { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+
+    .btn-row { display: flex; gap: 10px; justify-content: flex-end; }
+    button {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface2); color: var(--text);
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      padding: 8px 18px; cursor: pointer;
+      transition: background .15s, border-color .15s, opacity .15s;
+    }
+    button:hover:not(:disabled) { background: var(--surface); border-color: var(--muted); }
+    button:disabled { opacity: .35; cursor: default; }
+    .btn-primary { background: var(--accent); color: #0d1117; border-color: var(--accent); font-weight: 600; }
+    .btn-primary:hover:not(:disabled) { background: #e07020; border-color: #e07020; }
+    .btn-download { background: var(--surface2); color: var(--blue); border-color: rgba(88,166,255,.3); }
+    .btn-download:hover:not(:disabled) { border-color: var(--blue); }
+
+    #result-card { display: none; }
+    #result-card.visible { display: block; }
+    .result-body { align-items: center; }
+    #qr-image { display: block; max-width: 100%; border-radius: var(--radius);
+                border: 1px solid var(--border); image-rendering: pixelated; }
+
+    .error-msg {
+      color: var(--red); font-size: 13px;
+      background: rgba(248,81,73,.08); border: 1px solid rgba(248,81,73,.25);
+      border-radius: var(--radius); padding: 10px 14px; display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
 </head>
 <body>
-<div class="full-wrap">
 
-  <h1>⬡ QR <span>Generator</span></h1>
+  <header>
+    <div class="header-icon">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 0h5v5H0V0zm1 1v3h3V1H1zM2 2h1v1H2V2zM0 11h5v5H0v-5zm1 1v3h3v-3H1zm1 1h1v1H2v-1zM11 0h5v5h-5V0zm1 1v3h3V1h-3zm1 1h1v1h-1V2zM6 0h1v1H6V0zm1 1h1v1H7V1zM6 2h1v1H6V2zm2 0h1v1H8V2zM6 4h1v1H6V4zm2-2h1v1H8V2zm0 2h1v1H8V4zM6 6h1v2H6V6zm1 0h1v1H7V6zm1 1h1v1H8V7zm1-1h1v1H9V6zm0 2h1v1H9V8zm1-2h1v2h-1V6zm0 2h-1v1h1V8zm1-2h1v1h-1V6zm0 2h1v1h-1V8zm1-1h1v1h-1V7zm0-1h1v1h-1V6zm-6 4h1v1H6v-1zm0 2h1v1H6v-1zm0 2h1v1H6v-1zm2-4h1v1H8v-1zm0 2h1v1H8v-1zm0 2h1v1H8v-1zm2-4h1v1h-1v-1zm1 1h1v1h-1v-1zm-1 1h1v1h-1v-1zm1 1h1v1h-1v-1zm-1 1h1v1h-1v-1zm1 1h1v1h-1v-1zm2-5h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h1v1h-1v-1zm1-5h-1v1h1v-1zm0 4h-1v1h1v-1z"/>
+      </svg>
+    </div>
+    <span class="header-title">QR Code Generator</span>
+    <span class="header-version">v1.0.0</span>
+  </header>
 
-  <div class="field">
-    <label>Text or URL</label>
-    <input type="text" id="text" placeholder="Paste a URL or type any text…" spellcheck="false">
-  </div>
+  <main>
+    <div class="card">
+      <div class="card-header">Generate</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Text or URL</label>
+          <textarea id="text-input" placeholder="Paste a URL or type any text…" spellcheck="false"></textarea>
+        </div>
+        <div class="size-row">
+          <label>Size (px)</label>
+          <input type="number" id="size-input" value="400" min="50" max="2000" step="50">
+        </div>
+        <div id="error-msg" class="error-msg"></div>
+        <div class="btn-row">
+          <button id="btn-clear" disabled>Clear</button>
+          <button id="btn-generate" class="btn-primary" disabled>Generate</button>
+        </div>
+      </div>
+    </div>
 
-  <div class="size-row">
-    <label>Size (px)</label>
-    <input type="number" id="size" value="400" min="50" max="2000" step="50">
-  </div>
+    <div class="card" id="result-card">
+      <div class="card-header">QR Code</div>
+      <div class="card-body result-body">
+        <img id="qr-image" src="" alt="QR Code">
+        <div class="btn-row" style="width:100%">
+          <button id="btn-download" class="btn-download">⬇ Download PNG</button>
+        </div>
+      </div>
+    </div>
+  </main>
 
-  <div id="error" class="error" style="display:none"></div>
+  <script>
+    const textInput   = document.getElementById('text-input');
+    const sizeInput   = document.getElementById('size-input');
+    const btnClear    = document.getElementById('btn-clear');
+    const btnGenerate = document.getElementById('btn-generate');
+    const btnDownload = document.getElementById('btn-download');
+    const resultCard  = document.getElementById('result-card');
+    const qrImage     = document.getElementById('qr-image');
+    const errorMsg    = document.getElementById('error-msg');
 
-  <div class="btn-row">
-    <button id="btn-clear" disabled>Clear</button>
-    <button class="primary" id="btn-gen" disabled>Generate</button>
-  </div>
-
-  <div class="full-qr" id="qr-area" style="display:none">
-    <img id="qr-img" src="" alt="QR Code">
-  </div>
-
-  <div class="btn-row" id="dl-row" style="display:none">
-    <button id="btn-dl">⬇ Download PNG</button>
-  </div>
-
-</div>
-<script>
-  const textEl = document.getElementById('text');
-  const sizeEl = document.getElementById('size');
-  const btnGen = document.getElementById('btn-gen');
-  const btnClr = document.getElementById('btn-clear');
-  const btnDl  = document.getElementById('btn-dl');
-  const qrArea = document.getElementById('qr-area');
-  const qrImg  = document.getElementById('qr-img');
-  const errEl  = document.getElementById('error');
-  const dlRow  = document.getElementById('dl-row');
-
-  textEl.addEventListener('input', () => {
-    const has = textEl.value.trim().length > 0;
-    btnGen.disabled = !has;
-    btnClr.disabled = !has;
-  });
-
-  btnClr.addEventListener('click', () => {
-    textEl.value = '';
-    btnGen.disabled = btnClr.disabled = true;
-    qrArea.style.display = dlRow.style.display = 'none';
-    errEl.style.display = 'none';
-    textEl.focus();
-  });
-
-  btnGen.addEventListener('click', async () => {
-    const text = textEl.value.trim();
-    const size = Math.max(50, Math.min(2000, parseInt(sizeEl.value) || 400));
-    errEl.style.display = 'none';
-    btnGen.textContent = 'Generating…';
-    btnGen.disabled = true;
-    try {
-      const r = await fetch('/widget/api/qr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, size }),
-      });
-      const d = await r.json();
-      if (d.status !== 'Success') throw new Error(d.error || 'Error');
-      qrImg.src = `data:image/png;base64,${d.base64Image}`;
-      qrArea.style.display = dlRow.style.display = 'block';
-    } catch (e) {
-      errEl.textContent = e.message;
-      errEl.style.display = 'block';
-    } finally {
-      btnGen.textContent = 'Generate';
-      btnGen.disabled = false;
+    function updateButtons() {
+      const hasText = textInput.value.trim().length > 0;
+      btnClear.disabled    = !hasText;
+      btnGenerate.disabled = !hasText;
     }
-  });
 
-  textEl.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !btnGen.disabled) btnGen.click();
-  });
-
-  btnDl.addEventListener('click', () => {
-    const a = document.createElement('a');
-    a.href = qrImg.src;
-    a.download = 'qr-code.png';
-    a.click();
-  });
-
-  // Auto-generate from URL params (passed by compact widget)
-  window.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const text   = params.get('text');
-    const size   = params.get('size');
-    if (text) {
-      textEl.value = text;
-      if (size) sizeEl.value = Math.max(50, Math.min(2000, parseInt(size) || 400));
-      textEl.dispatchEvent(new Event('input'));
-      btnGen.click();
+    function hideResult() {
+      resultCard.classList.remove('visible');
+      qrImage.src = '';
+      errorMsg.classList.remove('visible');
     }
-  });
-</script>
+
+    textInput.addEventListener('input', () => {
+      updateButtons();
+      if (!textInput.value.trim()) hideResult();
+    });
+
+    btnClear.addEventListener('click', () => {
+      textInput.value = '';
+      updateButtons();
+      hideResult();
+      textInput.focus();
+    });
+
+    btnGenerate.addEventListener('click', async () => {
+      const text = textInput.value.trim();
+      const size = Math.max(50, Math.min(2000, parseInt(sizeInput.value) || 400));
+      errorMsg.classList.remove('visible');
+      btnGenerate.textContent = 'Generating…';
+      btnGenerate.disabled    = true;
+      btnClear.disabled       = true;
+      try {
+        const r = await fetch('/widget/api/qr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, size }),
+        });
+        if (!r.ok) throw new Error(`Server returned ${r.status}`);
+        const data = await r.json();
+        if (data.status !== 'Success') throw new Error(data.error || 'API error');
+        qrImage.src = `data:image/png;base64,${data.base64Image}`;
+        resultCard.classList.add('visible');
+      } catch (e) {
+        errorMsg.textContent = 'Failed to generate QR code: ' + e.message;
+        errorMsg.classList.add('visible');
+      } finally {
+        btnGenerate.textContent = 'Generate';
+        updateButtons();
+      }
+    });
+
+    btnDownload.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href     = qrImage.src;
+      a.download = 'qr-code.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // Cmd/Ctrl+Enter to generate
+    textInput.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !btnGenerate.disabled) btnGenerate.click();
+    });
+
+    // Auto-generate from URL params (passed by compact widget)
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const text   = params.get('text');
+      const size   = params.get('size');
+      if (text) {
+        textInput.value = text;
+        if (size) sizeInput.value = Math.max(50, Math.min(2000, parseInt(size) || 400));
+        updateButtons();
+        btnGenerate.click();
+      }
+    });
+  </script>
+
 </body>
 </html>
