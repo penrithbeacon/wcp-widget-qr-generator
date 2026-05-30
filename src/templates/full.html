@@ -29,6 +29,9 @@
       background: var(--surface); border-bottom: 1px solid var(--border);
       display: flex; align-items: center; gap: 12px; padding: 0 20px;
     }
+    /* When embedded in a dashboard tab iframe, no Electron title bar above */
+    .embedded header { top: 0; }
+    .embedded main  { padding-top: 76px; }
     .header-icon {
       width: 28px; height: 28px; border-radius: 6px;
       background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -228,11 +231,17 @@
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !btnGenerate.disabled) btnGenerate.click();
     });
 
-    // Auto-generate from URL params (passed by compact widget)
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
-      const text   = params.get('text');
-      const size   = params.get('size');
+
+      // Detect embedded context (tab iframe) and adjust layout
+      if (params.has('embedded') || window.parent !== window) {
+        document.documentElement.classList.add('embedded');
+      }
+
+      // Auto-generate from URL params passed by compact widget
+      const text = params.get('text');
+      const size = params.get('size');
       if (text) {
         textInput.value = text;
         if (size) sizeInput.value = Math.max(50, Math.min(2000, parseInt(size) || 400));
