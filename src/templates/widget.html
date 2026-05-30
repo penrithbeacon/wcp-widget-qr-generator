@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Generator</title>
+  <link rel="stylesheet" href="/widget/static/style.css">
+</head>
+<body>
+<div class="widget-wrap">
+
+  <div class="input-row">
+    <input type="text" id="text" placeholder="Paste text or URL…" spellcheck="false">
+    <input type="number" id="size" value="200" min="50" max="400" title="Size (px)">
+    <button class="primary" id="btn-gen" disabled>QR</button>
+    <button id="btn-clear" disabled>✕</button>
+  </div>
+
+  <div id="error" class="error" style="display:none"></div>
+
+  <div class="qr-area" id="qr-area">
+    <p class="qr-placeholder">Paste text above and tap QR</p>
+  </div>
+
+  <div class="action-row" id="action-row" style="display:none">
+    <button onclick="openFullWindow()" title="Open full-size generator in new window">⬡ Full Screen</button>
+    <button onclick="openFullTab()" title="Open full-size generator in new tab">⊞ New Tab</button>
+  </div>
+
+</div>
+
+<script>
+  const textEl = document.getElementById('text');
+  const sizeEl = document.getElementById('size');
+  const btnGen = document.getElementById('btn-gen');
+  const btnClr = document.getElementById('btn-clear');
+  const qrArea = document.getElementById('qr-area');
+  const errEl  = document.getElementById('error');
+  const actRow = document.getElementById('action-row');
+
+  textEl.addEventListener('input', () => {
+    const has = textEl.value.trim().length > 0;
+    btnGen.disabled = !has;
+    btnClr.disabled = !has;
+  });
+
+  btnClr.addEventListener('click', () => {
+    textEl.value = '';
+    btnGen.disabled = btnClr.disabled = true;
+    qrArea.innerHTML = '<p class="qr-placeholder">Paste text above and tap QR</p>';
+    errEl.style.display = 'none';
+    actRow.style.display = 'none';
+  });
+
+  btnGen.addEventListener('click', async () => {
+    const text = textEl.value.trim();
+    const size = Math.max(50, Math.min(400, parseInt(sizeEl.value) || 200));
+    errEl.style.display = 'none';
+    btnGen.textContent = '…';
+    btnGen.disabled = true;
+
+    try {
+      const r = await fetch('/widget/api/qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, size }),
+      });
+      const d = await r.json();
+      if (d.status !== 'Success') throw new Error(d.error || 'Error');
+      qrArea.innerHTML = `<img src="data:image/png;base64,${d.base64Image}" alt="QR Code">`;
+      actRow.style.display = 'flex';
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btnGen.textContent = 'QR';
+      btnGen.disabled = false;
+    }
+  });
+
+  textEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !btnGen.disabled) btnGen.click();
+  });
+
+  function openFullWindow() {
+    window.parent.postMessage({
+      type: 'wcp:open-window',
+      url:  window.location.origin + '/widget/full',
+      window: { width: 820, height: 620 }
+    }, '*');
+  }
+
+  function openFullTab() {
+    window.parent.postMessage({
+      type:    'wcp:open-tab',
+      url:     window.location.origin + '/widget/full',
+      title:   'QR Generator',
+      icon:    window.location.origin + '/widget/icon.svg',
+      persist: false,
+      tab:     { title: 'QR Generator', icon: window.location.origin + '/widget/icon.svg' }
+    }, '*');
+  }
+</script>
+</body>
+</html>

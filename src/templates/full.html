@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Generator — Full Size</title>
+  <link rel="stylesheet" href="/widget/static/style.css">
+</head>
+<body>
+<div class="full-wrap">
+
+  <h1>⬡ QR <span>Generator</span></h1>
+
+  <div class="field">
+    <label>Text or URL</label>
+    <input type="text" id="text" placeholder="Paste a URL or type any text…" spellcheck="false">
+  </div>
+
+  <div class="size-row">
+    <label>Size (px)</label>
+    <input type="number" id="size" value="400" min="50" max="2000" step="50">
+  </div>
+
+  <div id="error" class="error" style="display:none"></div>
+
+  <div class="btn-row">
+    <button id="btn-clear" disabled>Clear</button>
+    <button class="primary" id="btn-gen" disabled>Generate</button>
+  </div>
+
+  <div class="full-qr" id="qr-area" style="display:none">
+    <img id="qr-img" src="" alt="QR Code">
+  </div>
+
+  <div class="btn-row" id="dl-row" style="display:none">
+    <button id="btn-dl">⬇ Download PNG</button>
+  </div>
+
+</div>
+<script>
+  const textEl = document.getElementById('text');
+  const sizeEl = document.getElementById('size');
+  const btnGen = document.getElementById('btn-gen');
+  const btnClr = document.getElementById('btn-clear');
+  const btnDl  = document.getElementById('btn-dl');
+  const qrArea = document.getElementById('qr-area');
+  const qrImg  = document.getElementById('qr-img');
+  const errEl  = document.getElementById('error');
+  const dlRow  = document.getElementById('dl-row');
+
+  textEl.addEventListener('input', () => {
+    const has = textEl.value.trim().length > 0;
+    btnGen.disabled = !has;
+    btnClr.disabled = !has;
+  });
+
+  btnClr.addEventListener('click', () => {
+    textEl.value = '';
+    btnGen.disabled = btnClr.disabled = true;
+    qrArea.style.display = dlRow.style.display = 'none';
+    errEl.style.display = 'none';
+    textEl.focus();
+  });
+
+  btnGen.addEventListener('click', async () => {
+    const text = textEl.value.trim();
+    const size = Math.max(50, Math.min(2000, parseInt(sizeEl.value) || 400));
+    errEl.style.display = 'none';
+    btnGen.textContent = 'Generating…';
+    btnGen.disabled = true;
+    try {
+      const r = await fetch('/widget/api/qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, size }),
+      });
+      const d = await r.json();
+      if (d.status !== 'Success') throw new Error(d.error || 'Error');
+      qrImg.src = `data:image/png;base64,${d.base64Image}`;
+      qrArea.style.display = dlRow.style.display = 'block';
+    } catch(e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+    } finally {
+      btnGen.textContent = 'Generate';
+      btnGen.disabled = false;
+    }
+  });
+
+  textEl.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !btnGen.disabled) btnGen.click();
+  });
+
+  btnDl.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = qrImg.src;
+    a.download = 'qr-code.png';
+    a.click();
+  });
+</script>
+</body>
+</html>

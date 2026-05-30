@@ -1,0 +1,6 @@
+services:
+  qr-generator:
+    build: .
+    ports:
+      - "3738:3738"
+    restart: unless-stopped
