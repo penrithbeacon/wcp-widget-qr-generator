@@ -218,12 +218,17 @@
     });
 
     btnDownload.addEventListener('click', () => {
-      const a = document.createElement('a');
-      a.href     = qrImage.src;
-      a.download = 'qr-code.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (window.parent !== window) {
+        // Embedded in iframe — route via postMessage for native file picker
+        window.parent.postMessage({
+          type: 'wcp:download-file', filename: 'qr-code.png', dataUrl: qrImage.src
+        }, '*');
+      } else {
+        // Standalone Electron window — direct download (will-download handler fires)
+        const a = document.createElement('a');
+        a.href = qrImage.src; a.download = 'qr-code.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      }
     });
 
     // Cmd/Ctrl+Enter to generate
