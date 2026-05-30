@@ -1,6 +1,7 @@
 services:
   qr-generator:
     build: .
+    image: wcp-widget-qr-generator
     ports:
       - "3738:3738"
     restart: unless-stopped
