@@ -172,7 +172,7 @@
   function openFullTab() {
     window.parent.postMessage({
       type: 'wcp:open-tab', url: getFullUrl(true),
-      title: 'QR Generator', icon: `${window.location.origin}/widget/icon.svg`, persist: false
+      title: 'QR Generator', icon: `${window.location.origin}/widget/icon.svg`, persist: true
     }, '*');
   }
 </script>
