@@ -88,7 +88,8 @@ Response:
 | Tag | Description |
 |-----|-------------|
 | `latest` | Latest stable release |
-| `1.0.0-wcp1.1.0` | Widget v1.0.0, WCP protocol v1.1.0 |
+| `1.1.0-wcp1.3.0` | Widget v1.1.0, WCP 1.3.0 — mandatory components array |
+<!-- removed: 1.0.0-wcp1.1.0 | Widget v1.0.0, WCP protocol v1.1.0 |
 
 ## Source
 
