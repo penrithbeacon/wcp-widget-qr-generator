@@ -94,3 +94,4 @@ Response:
 
 - Docker Hub: [penrithbeacon/wcp-widget-qr-generator](https://hub.docker.com/r/penrithbeacon/wcp-widget-qr-generator)
 - GitHub: [penrithbeacon/wcp-widget-qr-generator](https://github.com/penrithbeacon/wcp-widget-qr-generator)
+- WCP Specification: [widgetcontextprotocol.com](https://widgetcontextprotocol.com)
