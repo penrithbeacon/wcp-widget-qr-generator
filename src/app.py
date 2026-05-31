@@ -21,22 +21,26 @@ app = Flask(__name__)
 # ── WCP Manifest ─────────────────────────────────────────────────────────────
 
 WCP_MANIFEST = {
-    "wcp": "1.0.0",
+    "wcp": "1.3.0",
     "name": "QR Generator",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": (
         "Generate QR codes for any text or URL. "
         "Standalone — no external dependencies required."
     ),
     "icon": "/widget/icon.svg",
     "health": "/widget/health",
-    "widget": {
-        "path": "/widget/",
-        "renderMode": "iframe",
-        "refreshInterval": 0,
-        "authType": "none",
-        "defaultSize": {"w": 4, "h": 3},
-    },
+    "components": [
+        {
+            "id": "qr-generator",
+            "name": "QR Generator",
+            "role": "widget",
+            "path": "/widget/",
+            "icon": "/widget/icon.svg",
+            "renderMode": "iframe",
+            "defaultSize": {"w": 4, "h": 3},
+        }
+    ],
     "pages": [
         {
             "id": "full",
@@ -82,7 +86,7 @@ def widget_manifest():
     return jsonify({
         "wcp": m["wcp"], "name": m["name"], "version": m["version"],
         "description": m["description"], "icon": m["icon"],
-        "health": m["health"], "widget": m["widget"],
+        "health": m["health"], "components": m["components"],
     })
 
 @app.route("/widget/health")
