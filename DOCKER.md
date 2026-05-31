@@ -2,7 +2,7 @@
 
 A [Widget Context Protocol (WCP)](https://github.com/penrithbeacon/wcp-widget-qr-generator)
 compliant widget that generates QR codes for any text or URL. Designed to run as a
-sidecar container alongside the **Penrith Beacon MCP Dashboard** or any other WCP-compatible
+sidecar container alongside the **Penrith Beacon WCP Dashboard** or any other WCP-compatible
 host dashboard.
 
 ## Quick Start
