@@ -33,6 +33,7 @@ WCP_MANIFEST = {
     "components": [
         {
             "id": "qr-generator",
+            "uuid": "9296f300-78b9-4c07-afbe-f2579bcc50fc",
             "name": "QR Generator",
             "role": "widget",
             "path": "/widget/",
