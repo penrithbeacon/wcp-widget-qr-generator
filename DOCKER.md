@@ -1,9 +1,10 @@
 # WCP Widget: QR Generator
 
-A [Widget Context Protocol (WCP)](https://github.com/penrithbeacon/wcp-widget-qr-generator)
-compliant widget that generates QR codes for any text or URL. Designed to run as a
-sidecar container alongside the **Penrith Beacon WCP Dashboard** or any other WCP-compatible
-host dashboard.
+A [Widget Context Protocol (WCP)](https://widgetcontextprotocol.com) compliant widget that
+generates QR codes for any text or URL. Fully self-contained — no external API calls, works
+offline. Designed to run alongside any WCP-compatible host dashboard.
+
+**Specification:** [widgetcontextprotocol.com](https://widgetcontextprotocol.com)
 
 ## Quick Start
 
@@ -15,7 +16,7 @@ docker run -d \
   penrithbeacon/wcp-widget-qr-generator:latest
 ```
 
-Then add it to your WCP dashboard by pointing it at `http://localhost:3738`.
+Then add it to your WCP dashboard at the container's network address.
 
 ## Docker Compose
 
@@ -29,14 +30,24 @@ services:
     restart: unless-stopped
 ```
 
+## WCP Request Headers
+
+This widget supports the WCP 1.3.1 request headers:
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Wcp-Instance-Id` | Required | UUID identifying this widget instance |
+| `Wcp-Dashboard-Id` | Optional | UUID identifying the requesting dashboard |
+| `Wcp-Version` | Optional | Protocol version the dashboard speaks |
+
 ## WCP Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /widget/` | Compact widget view (iframe) |
-| `GET /widget/wcp` | WCP manifest |
+| `GET /widget/wcp` | WCP 1.3.1 manifest |
 | `GET /widget/health` | Health check |
-| `GET /widget/icon.svg` | Widget icon |
+| `GET /widget/icon.svg` | Widget icon (SVG) |
 | `GET /widget/full` | Full-page QR generator |
 | `POST /widget/api/qr` | Generate a QR code |
 
@@ -44,7 +55,7 @@ services:
 
 **Generate a QR code:**
 ```bash
-curl -X POST http://localhost:3738/widget/api/qr \
+curl -X POST http://192.168.1.42:3738/widget/api/qr \
   -H "Content-Type: application/json" \
   -d '{"text": "https://example.com", "size": 300}'
 ```
@@ -69,11 +80,12 @@ Response:
 
 | Property | Value |
 |----------|-------|
-| WCP Version | 1.1.0 |
-| Widget Version | 1.0.0 |
+| WCP Version | 1.3.1 |
+| Widget Version | 1.2.0 |
 | Render mode | iframe |
 | Auth | none |
 | Default card size | 4×3 |
+| Multi-instance | Stateless — no configuration stored |
 
 ## Technical Details
 
@@ -88,8 +100,8 @@ Response:
 | Tag | Description |
 |-----|-------------|
 | `latest` | Latest stable release |
+| `1.2.0-wcp1.3.1` | Widget v1.2.0, WCP 1.3.1 — CORS headers, multi-instance support |
 | `1.1.0-wcp1.3.0` | Widget v1.1.0, WCP 1.3.0 — mandatory components array |
-<!-- removed: 1.0.0-wcp1.1.0 | Widget v1.0.0, WCP protocol v1.1.0 |
 
 ## Source
 
