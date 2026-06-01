@@ -8,6 +8,7 @@ Specification: https://widgetcontextprotocol.com
 import io
 import base64
 import json
+import zipfile
 from flask import Flask, render_template, jsonify, request, Response
 
 try:
@@ -117,12 +118,46 @@ def widget_full():
     instance_id = request.headers.get('Wcp-Instance-Id', '')
     return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=instance_id)
 
-@app.route("/widget/icon.svg")
-def widget_icon():
-    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
   <path fill="#f0883e" d="M0 0h7v7H0V0zm1 1v5h5V1H1zm1 1h3v3H2V2zM9 0h7v7H9V0zm1 1v5h5V1h-5zm1 1h3v3h-3V2zM0 9h7v7H0V9zm1 1v5h5v-5H1zm1 1h3v3H2v-3zm8-1h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2-2h1v4h-1v-4zm2 0h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h1v1h-1v-1zm-4 0h1v1h-1v-1z"/>
 </svg>"""
-    return Response(svg, mimetype="image/svg+xml")
+
+@app.route("/widget/icon.svg")
+def widget_icon():
+    return Response(ICON_SVG, mimetype="image/svg+xml")
+
+@app.route("/widget/api/guids")
+def api_guids():
+    return jsonify({"components": [
+        {"id": c["id"], "uuid": c["uuid"], "name": c["name"]}
+        for c in WCP_MANIFEST.get("components", [])
+    ]})
+
+@app.route("/widget/export.wcp")
+def export_wcp():
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("manifest.json", json.dumps(WCP_MANIFEST, indent=2))
+        z.writestr("icon.svg", ICON_SVG)
+        z.writestr("DOCKER.md", f"""# {WCP_MANIFEST['name']} — WCP Container
+
+## Pull
+```
+docker pull penrithbeacon/wcp-widget-qr-generator
+```
+
+## Run
+```
+docker compose up -d
+```
+
+Port: 3738 | Spec: https://widgetcontextprotocol.com
+""")
+    buf.seek(0)
+    name = WCP_MANIFEST["name"].lower().replace(" ", "-")
+    resp = Response(buf.read(), mimetype="application/zip")
+    resp.headers["Content-Disposition"] = f'attachment; filename="{name}.wcp"'
+    return resp
 
 # ── QR generation API ─────────────────────────────────────────────────────────
 
