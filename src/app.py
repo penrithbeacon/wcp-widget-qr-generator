@@ -1,8 +1,7 @@
 """
 WCP Widget: QR Generator
-Widget Context Protocol 1.3.1 reference implementation
-Port: 3738
-Specification: https://widgetcontextprotocol.com
+Widget Context Protocol 1.4.0 compliant
+Port: 3738  |  Specification: https://widgetcontextprotocol.com
 """
 
 import io
@@ -27,21 +26,31 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin']  = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = (
-        'Content-Type, Wcp-Instance-Id, Wcp-Dashboard-Id, Wcp-Version'
+        'Content-Type, Wcp-Instance-Id, Wcp-Dashboard-Id, Wcp-Version, Wcp-Widget-Id'
     )
     return response
 
 @app.route('/widget/<path:p>', methods=['OPTIONS'])
 @app.route('/widget/', methods=['OPTIONS'])
+@app.route('/wcp', methods=['OPTIONS'])
 def cors_preflight(p=''):
     return Response('', status=204)
+
+# ── Instance ID helper ────────────────────────────────────────────────────────
+
+def get_instance_id():
+    iid = request.headers.get("Wcp-Instance-Id", "").strip()
+    if not iid:
+        iid = (request.args.get("wcpInstanceId", "") or "").strip()
+    return iid
 
 # ── WCP Manifest ─────────────────────────────────────────────────────────────
 
 WCP_MANIFEST = {
-    "wcp": "1.3.1",
+    "wcp": "1.4.0",
+    "uuid": "657a538f-54b4-4315-b624-8304b5c69865",
     "name": "QR Generator",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": (
         "Generate QR codes for any text or URL. "
         "Standalone — no external dependencies required."
@@ -89,11 +98,25 @@ WCP_MANIFEST = {
 
 # ── WCP endpoints ─────────────────────────────────────────────────────────────
 
+@app.route("/wcp")
+def container_directory():
+    return jsonify({
+        "type":    "directory",
+        "wcp":     "1.4.0",
+        "widgets": [{
+            "id":          "qr-generator",
+            "uuid":        WCP_MANIFEST["uuid"],
+            "name":        WCP_MANIFEST["name"],
+            "description": WCP_MANIFEST["description"],
+            "icon":        WCP_MANIFEST["icon"],
+            "manifest":    "/widget/wcp",
+        }]
+    })
+
 @app.route("/widget/")
 @app.route("/widget/index.html")
 def widget_compact():
-    instance_id = request.headers.get('Wcp-Instance-Id', '')
-    return render_template("widget.html", manifest=WCP_MANIFEST, wcp_instance_id=instance_id)
+    return render_template("widget.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id())
 
 @app.route("/widget/wcp")
 def widget_wcp():
@@ -115,8 +138,7 @@ def widget_health():
 
 @app.route("/widget/full")
 def widget_full():
-    instance_id = request.headers.get('Wcp-Instance-Id', '')
-    return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=instance_id)
+    return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id())
 
 ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
   <path fill="#f0883e" d="M0 0h7v7H0V0zm1 1v5h5V1H1zm1 1h3v3H2V2zM9 0h7v7H9V0zm1 1v5h5V1h-5zm1 1h3v3h-3V2zM0 9h7v7H0V9zm1 1v5h5v-5H1zm1 1h3v3H2v-3zm8-1h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2-2h1v4h-1v-4zm2 0h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h1v1h-1v-1zm-4 0h1v1h-1v-1z"/>
@@ -128,10 +150,13 @@ def widget_icon():
 
 @app.route("/widget/api/guids")
 def api_guids():
-    return jsonify({"components": [
-        {"id": c["id"], "uuid": c["uuid"], "name": c["name"]}
-        for c in WCP_MANIFEST.get("components", [])
-    ]})
+    return jsonify({
+        "uuid": WCP_MANIFEST["uuid"],
+        "components": [
+            {"id": c["id"], "uuid": c["uuid"], "name": c["name"]}
+            for c in WCP_MANIFEST.get("components", [])
+        ]
+    })
 
 @app.route("/widget/export.wcp")
 def export_wcp():
