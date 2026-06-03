@@ -26,7 +26,8 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin']  = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = (
-        'Content-Type, Wcp-Instance-Id, Wcp-Dashboard-Id, Wcp-Version, Wcp-Widget-Id'
+        'Content-Type, Wcp-Instance-Id, Wcp-Dashboard-Id, Wcp-Version, Wcp-Widget-Id, '
+        'Wcp-Orchestration-Id, Wcp-Application-Id'
     )
     return response
 
@@ -44,13 +45,33 @@ def get_instance_id():
         iid = (request.args.get("wcpInstanceId", "") or "").strip()
     return iid
 
+def get_orchestration_id():
+    oid = request.headers.get("Wcp-Orchestration-Id", "").strip()
+    if not oid:
+        oid = (request.args.get("wcpOrchestrationId", "") or "").strip()
+    return oid
+
+def get_application_id():
+    aid = request.headers.get("Wcp-Application-Id", "").strip()
+    if not aid:
+        aid = (request.args.get("wcpApplicationId", "") or "").strip()
+    return aid
+
+def get_state_key():
+    """WCP 1.5.0 compound state key. See widgetcontextprotocol.com — WCP Request Headers."""
+    orch_id = get_orchestration_id()
+    app_id  = get_application_id()
+    if orch_id and app_id: return f"{orch_id}:{app_id}"
+    if orch_id:            return orch_id
+    return "global"
+
 # ── WCP Manifest ─────────────────────────────────────────────────────────────
 
 WCP_MANIFEST = {
-    "wcp": "1.4.0",
+    "wcp": "1.5.0",
     "uuid": "657a538f-54b4-4315-b624-8304b5c69865",
     "name": "QR Generator",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "description": (
         "Generate QR codes for any text or URL. "
         "Standalone — no external dependencies required."
@@ -102,7 +123,7 @@ WCP_MANIFEST = {
 def container_directory():
     return jsonify({
         "type":    "directory",
-        "wcp":     "1.4.0",
+        "wcp":     "1.5.0",
         "widgets": [{
             "id":          "qr-generator",
             "uuid":        WCP_MANIFEST["uuid"],
@@ -116,7 +137,8 @@ def container_directory():
 @app.route("/widget/")
 @app.route("/widget/index.html")
 def widget_compact():
-    return render_template("widget.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id())
+    return render_template("widget.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id(),
+        wcp_orchestration_id=get_orchestration_id(), wcp_application_id=get_application_id())
 
 @app.route("/widget/wcp")
 def widget_wcp():
@@ -138,7 +160,8 @@ def widget_health():
 
 @app.route("/widget/full")
 def widget_full():
-    return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id())
+    return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id(),
+        wcp_orchestration_id=get_orchestration_id(), wcp_application_id=get_application_id())
 
 ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
   <path fill="#f0883e" d="M0 0h7v7H0V0zm1 1v5h5V1H1zm1 1h3v3H2V2zM9 0h7v7H9V0zm1 1v5h5V1h-5zm1 1h3v3h-3V2zM0 9h7v7H0V9zm1 1v5h5v-5H1zm1 1h3v3H2v-3zm8-1h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2-2h1v4h-1v-4zm2 0h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h1v1h-1v-1zm-4 0h1v1h-1v-1z"/>
