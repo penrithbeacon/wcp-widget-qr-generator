@@ -1,6 +1,6 @@
 """
 WCP Widget: QR Generator
-Widget Context Protocol 1.4.0 compliant
+Widget Context Protocol 2.0.0 compliant
 Port: 3738  |  Specification: https://widgetcontextprotocol.com
 """
 
@@ -68,7 +68,7 @@ def get_state_key():
 # ── WCP Manifest ─────────────────────────────────────────────────────────────
 
 WCP_MANIFEST = {
-    "wcp": "1.5.0",
+    "wcp": "2.0.0",
     "uuid": "657a538f-54b4-4315-b624-8304b5c69865",
     "name": "QR Generator",
     "version": "1.3.0",
@@ -78,6 +78,12 @@ WCP_MANIFEST = {
     ),
     "icon": "/widget/icon.svg",
     "health": "/widget/health",
+    "container": {
+        "image":            "penrithbeacon/wcp-widget-qr-generator",
+        "tag":              "1.3.0-wcp2.0.0",
+        "port":             3738,
+        "defaultLifecycle": "always",
+    },
     "components": [
         {
             "id": "qr-generator",
@@ -123,7 +129,7 @@ WCP_MANIFEST = {
 def container_directory():
     return jsonify({
         "type":    "directory",
-        "wcp":     "1.5.0",
+        "wcp":     "2.0.0",
         "widgets": [{
             "id":          "qr-generator",
             "uuid":        WCP_MANIFEST["uuid"],
