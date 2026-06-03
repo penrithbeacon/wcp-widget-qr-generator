@@ -6,9 +6,9 @@ QR codes for any text or URL. Fully self-contained — no external API calls, wo
 **Specification:** [widgetcontextprotocol.com](https://widgetcontextprotocol.com)  
 **Part of the** [Penrith Beacon WCP](https://penrithbeacon.com) widget suite.
 
-> **WCP 1.4.0 certified.** This widget implements the full
-> [Widget Context Protocol 1.4.0](https://widgetcontextprotocol.com) specification,
-> including server UUID, Container Directory (`GET /wcp`), and all four `Wcp-*` request headers.
+> **WCP 1.5.0 certified.** This widget implements the full
+> [Widget Context Protocol 1.5.0](https://widgetcontextprotocol.com) specification,
+> including server UUID, Container Directory (`GET /wcp`), all six `Wcp-*` request headers, and context-scoped runtime state isolation (`Wcp-Orchestration-Id`, `Wcp-Application-Id`).
 
 ---
 
@@ -58,7 +58,7 @@ services:
 
 ## WCP Request Headers
 
-This widget supports the WCP 1.4.0 request headers:
+This widget supports the WCP 1.5.0 request headers:
 
 | Header | Required | Description |
 |--------|----------|-------------|
@@ -66,6 +66,8 @@ This widget supports the WCP 1.4.0 request headers:
 | `Wcp-Dashboard-Id` | Optional | UUID identifying the requesting dashboard |
 | `Wcp-Version` | Optional | Protocol version the dashboard speaks |
 | `Wcp-Widget-Id` | Optional | Widget ID from Container Directory selection |
+| `Wcp-Orchestration-Id` | Optional | UUID of the active orchestration — shared state key for multi-component coordination |
+| `Wcp-Application-Id` | Optional | UUID of the active application window (kiosk only) — combined with orchestration ID for full isolation |
 
 ---
 
@@ -73,9 +75,9 @@ This widget supports the WCP 1.4.0 request headers:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `GET /wcp` | GET | WCP 1.4.0 Container Directory |
+| `GET /wcp` | GET | WCP 1.5.0 Container Directory |
 | `GET /widget/` | GET | Compact widget view (iframe) |
-| `GET /widget/wcp` | GET | WCP 1.4.0 manifest |
+| `GET /widget/wcp` | GET | WCP 1.5.0 manifest |
 | `GET /widget/health` | GET | `{"status":"ok","name":"QR Generator"}` |
 | `GET /widget/icon.svg` | GET | Widget icon (SVG) |
 | `GET /widget/full` | GET | Full-page QR generator |
@@ -124,7 +126,7 @@ Each QR code is generated on demand and returned in the response.
 
 | Property | Value |
 |----------|-------|
-| WCP Version | 1.4.0 |
+| WCP Version | 1.5.0 |
 | Widget Version | 1.2.1 |
 | Render mode | iframe |
 | Auth | none |
