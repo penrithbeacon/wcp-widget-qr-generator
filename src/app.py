@@ -79,7 +79,8 @@ WCP_MANIFEST = {
     "icon": "/widget/icon.svg",
     "health": "/widget/health",
     "container": {
-        "image":            "penrithbeacon/wcp-widget-qr-generator",
+        "image":            "docker.io/penrithbeacon/wcp-widget-qr-generator",
+        "source":           {"type": "registry"},
         "tag":              "1.3.0-wcp2.0.0",
         "port":             3738,
         "defaultLifecycle": "always",

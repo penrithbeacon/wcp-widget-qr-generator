@@ -13,7 +13,7 @@ docker run -d \
   --name wcp-widget-qr-generator \
   -p 3738:3738 \
   --restart unless-stopped \
-  penrithbeacon/wcp-widget-qr-generator:latest
+  docker.io/penrithbeacon/wcp-widget-qr-generator:latest
 ```
 
 Then add it to your WCP dashboard at the container's network address.
@@ -23,7 +23,7 @@ Then add it to your WCP dashboard at the container's network address.
 ```yaml
 services:
   qr-generator:
-    image: penrithbeacon/wcp-widget-qr-generator:latest
+    image: docker.io/penrithbeacon/wcp-widget-qr-generator:latest
     container_name: wcp-widget-qr-generator
     ports:
       - "3738:3738"
