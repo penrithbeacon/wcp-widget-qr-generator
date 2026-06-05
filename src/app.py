@@ -74,7 +74,7 @@ WCP_MANIFEST = {
     "wcp": "2.1.0",
     "uuid": "657a538f-54b4-4315-b624-8304b5c69865",
     "name": "QR Generator",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": (
         "Generate QR codes for any text or URL. "
         "Standalone — no external dependencies required."

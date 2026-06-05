@@ -63,7 +63,7 @@
 
   <div class="input-row">
     <input type="text" id="text" placeholder="Paste text or URL…" spellcheck="false">
-    <input type="number" id="size" value="160" min="50" max="200">
+    <input type="number" id="size" value="160" min="50">
     <button class="primary" id="btn-gen" disabled>Generate</button>
     <button id="btn-clear" disabled title="Clear">✕</button>
   </div>
@@ -103,6 +103,11 @@ function wcpFetch(url, opts) {
   const qrArea  = document.getElementById('qr-area');
   const errEl   = document.getElementById('error');
 
+  sizeEl.addEventListener('blur', () => {
+    const v = parseInt(sizeEl.value);
+    if (!v || v < 50) sizeEl.value = 50;
+  });
+
   function updateButtons() {
     const has = textEl.value.trim().length > 0;
     btnGen.disabled = !has;
@@ -121,7 +126,7 @@ function wcpFetch(url, opts) {
 
   btnGen.addEventListener('click', async () => {
     const text = textEl.value.trim();
-    const size = Math.max(50, Math.min(200, parseInt(sizeEl.value) || 160));
+    const size = Math.max(50, parseInt(sizeEl.value) || 160);
     errEl.style.display = 'none';
     btnGen.textContent = '…';
     btnGen.disabled = true;
