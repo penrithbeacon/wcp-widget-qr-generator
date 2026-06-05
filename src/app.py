@@ -7,6 +7,7 @@ Port: 3738  |  Specification: https://widgetcontextprotocol.com
 import io
 import base64
 import json
+import os
 import zipfile
 from flask import Flask, render_template, jsonify, request, Response
 
@@ -18,6 +19,8 @@ except ImportError:
     QR_AVAILABLE = False
 
 app = Flask(__name__)
+
+PUBLISHED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'published', 'index.html')
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 
@@ -68,10 +71,10 @@ def get_state_key():
 # ── WCP Manifest ─────────────────────────────────────────────────────────────
 
 WCP_MANIFEST = {
-    "wcp": "2.0.0",
+    "wcp": "2.1.0",
     "uuid": "657a538f-54b4-4315-b624-8304b5c69865",
     "name": "QR Generator",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": (
         "Generate QR codes for any text or URL. "
         "Standalone — no external dependencies required."
@@ -81,7 +84,7 @@ WCP_MANIFEST = {
     "container": {
         "image":            "docker.io/penrithbeacon/wcp-widget-qr-generator",
         "source":           {"type": "registry"},
-        "tag":              "1.3.0-wcp2.0.0",
+        "tag":              "1.4.0-wcp2.1.0",
         "port":             3738,
         "defaultLifecycle": "always",
     },
@@ -124,13 +127,37 @@ WCP_MANIFEST = {
     ],
 }
 
+# ── JSON-LD structured data ───────────────────────────────────────────────────
+
+WIDGET_JSONLD = json.dumps({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": WCP_MANIFEST["name"],
+    "softwareVersion": WCP_MANIFEST["version"],
+    "description": WCP_MANIFEST["description"],
+    "identifier": WCP_MANIFEST["uuid"],
+    "applicationCategory": "WCP Widget",
+    "operatingSystem": "Web",
+    "isBasedOn": {
+        "@type": "WebSite",
+        "name": "Widget Context Protocol",
+        "url": "https://widgetcontextprotocol.com",
+    },
+    "additionalProperty": [
+        {"@type": "PropertyValue", "name": "wcpVersion",      "value": WCP_MANIFEST["wcp"]},
+        {"@type": "PropertyValue", "name": "containerImage",  "value": WCP_MANIFEST["container"]["image"]},
+        {"@type": "PropertyValue", "name": "containerTag",    "value": WCP_MANIFEST["container"]["tag"]},
+        {"@type": "PropertyValue", "name": "containerPort",   "value": str(WCP_MANIFEST["container"]["port"])},
+    ],
+}, indent=2)
+
 # ── WCP endpoints ─────────────────────────────────────────────────────────────
 
 @app.route("/wcp")
 def container_directory():
     return jsonify({
         "type":    "directory",
-        "wcp":     "2.0.0",
+        "wcp":     "2.1.0",
         "widgets": [{
             "id":          "qr-generator",
             "uuid":        WCP_MANIFEST["uuid"],
@@ -141,15 +168,47 @@ def container_directory():
         }]
     })
 
+@app.route('/')
+def published_spa():
+    if os.path.exists(PUBLISHED_PATH):
+        with open(PUBLISHED_PATH, 'r', encoding='utf-8') as f:
+            return Response(f.read(), mimetype='text/html')
+    return Response('Not Found', status=404, mimetype='text/plain')
+
+@app.route('/widget/publish', methods=['POST'])
+def publish():
+    html = request.get_data(as_text=True)
+    if not html:
+        return jsonify({'success': False, 'error': 'Empty body'}), 400
+    try:
+        os.makedirs(os.path.dirname(PUBLISHED_PATH), exist_ok=True)
+        with open(PUBLISHED_PATH, 'w', encoding='utf-8') as f:
+            f.write(html)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/widget/publish', methods=['DELETE'])
+def unpublish():
+    try:
+        if os.path.exists(PUBLISHED_PATH):
+            os.remove(PUBLISHED_PATH)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route("/widget/")
 @app.route("/widget/index.html")
 def widget_compact():
-    return render_template("widget.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id(),
+    return render_template("widget.html", manifest=WCP_MANIFEST, jsonld=WIDGET_JSONLD,
+        wcp_instance_id=get_instance_id(),
         wcp_orchestration_id=get_orchestration_id(), wcp_application_id=get_application_id())
 
 @app.route("/widget/wcp")
 def widget_wcp():
-    return jsonify(WCP_MANIFEST)
+    manifest = dict(WCP_MANIFEST)
+    manifest['web'] = {'published': os.path.exists(PUBLISHED_PATH)}
+    return jsonify(manifest)
 
 @app.route("/widget/manifest")
 def widget_manifest():
@@ -167,7 +226,8 @@ def widget_health():
 
 @app.route("/widget/full")
 def widget_full():
-    return render_template("full.html", manifest=WCP_MANIFEST, wcp_instance_id=get_instance_id(),
+    return render_template("full.html", manifest=WCP_MANIFEST, jsonld=WIDGET_JSONLD,
+        wcp_instance_id=get_instance_id(),
         wcp_orchestration_id=get_orchestration_id(), wcp_application_id=get_application_id())
 
 ICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">

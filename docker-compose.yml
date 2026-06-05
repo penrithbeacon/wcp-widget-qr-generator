@@ -5,4 +5,6 @@ services:
     container_name: wcp-widget-qr-generator
     ports:
       - "3738:3738"
+    volumes:
+      - ./published:/app/published
     restart: unless-stopped
