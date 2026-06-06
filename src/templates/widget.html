@@ -6,41 +6,43 @@
   <title>QR Generator</title>
   <script type="application/ld+json">{{ jsonld|safe }}</script>
   <style>
-    :root {
-      --bg:#0d1117; --surface:#161b22; --surface2:#1c2128;
-      --border:#30363d; --text:#e6edf3; --muted:#8b949e;
-      --accent:#f0883e; --red:#f85149; --blue:#58a6ff; --radius:6px;
-    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: var(--bg); color: var(--text);
+    html, body { background: var(--wcp-color-bg,#0d1117); color: var(--wcp-color-text,#e6edf3);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 13px; height: 100%; overflow: hidden; }
 
-    .widget-wrap { display:flex; flex-direction:column; height:100vh;
+    /* ── Themed scrollbars ──────────────────────────────────────────── */
+    *::-webkit-scrollbar{width:8px;height:8px;}
+    *::-webkit-scrollbar-track{background:var(--wcp-color-surface-raised,#1c2128);}
+    *::-webkit-scrollbar-thumb{background:var(--wcp-color-border,#30363d);border-radius:4px;}
+    *::-webkit-scrollbar-thumb:hover{background:var(--wcp-color-text-muted,#8b949e);}
+    *{scrollbar-color:var(--wcp-color-border,#30363d) var(--wcp-color-surface-raised,#1c2128);scrollbar-width:thin;}
+
+    .widget-wrap { display:flex; flex-direction:column; height:100%;
                    padding:8px; gap:6px; }
 
     /* Input row — full width */
     .input-row { display:flex; gap:5px; align-items:center; flex-shrink:0; }
-    .input-row #text  { flex:1; min-width:0; background:var(--surface2);
-      border:1px solid var(--border); border-radius:var(--radius);
-      color:var(--text); font-family:inherit; font-size:12px; padding:6px 8px; }
-    .input-row #text:focus { outline:none; border-color:var(--accent); }
-    .input-row #size  { width:54px; flex-shrink:0; background:var(--surface2);
-      border:1px solid var(--border); border-radius:var(--radius);
-      color:var(--text); font-family:inherit; font-size:12px; padding:6px 8px; }
-    .input-row #size:focus { outline:none; border-color:var(--accent); }
+    .input-row #text  { flex:1; min-width:0; background:var(--wcp-color-surface-raised,#1c2128);
+      border:1px solid var(--wcp-color-border,#30363d); border-radius:var(--wcp-radius-md,6px);
+      color:var(--wcp-color-text,#e6edf3); font-family:inherit; font-size:12px; padding:6px 8px; }
+    .input-row #text:focus { outline:none; border-color:var(--wcp-color-primary,#f0883e); }
+    .input-row #size  { width:54px; flex-shrink:0; background:var(--wcp-color-surface-raised,#1c2128);
+      border:1px solid var(--wcp-color-border,#30363d); border-radius:var(--wcp-radius-md,6px);
+      color:var(--wcp-color-text,#e6edf3); font-family:inherit; font-size:12px; padding:6px 8px; }
+    .input-row #size:focus { outline:none; border-color:var(--wcp-color-primary,#f0883e); }
     input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
     input[type=number] { -moz-appearance:textfield; }
 
     /* Buttons */
-    button { background:var(--surface2); border:1px solid var(--border);
-      border-radius:var(--radius); color:var(--text); cursor:pointer;
+    button { background:var(--wcp-color-surface-raised,#1c2128); border:1px solid var(--wcp-color-border,#30363d);
+      border-radius:var(--wcp-radius-md,6px); color:var(--wcp-color-text,#e6edf3); cursor:pointer;
       font-family:inherit; font-size:12px; padding:6px 10px;
       transition:background .15s, opacity .15s; display:inline-flex;
       align-items:center; justify-content:center; gap:4px; }
-    button:hover:not(:disabled) { background:var(--surface); }
+    button:hover:not(:disabled) { background:var(--wcp-color-surface,#161b22); }
     button:disabled { opacity:.35; cursor:default; }
-    button.primary { background:var(--accent); border-color:var(--accent);
+    button.primary { background:var(--wcp-color-primary,#f0883e); border-color:var(--wcp-color-primary,#f0883e);
                      color:#0d1117; font-weight:600; }
     button.primary:hover:not(:disabled) { background:#e07020; }
     button.icon-btn { padding:6px 8px; }
@@ -49,13 +51,13 @@
     .qr-area { flex:1; display:flex; align-items:center; justify-content:center;
                overflow:hidden; min-height:0; }
     .qr-area img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
-    .qr-placeholder { color:var(--text); font-size:11px; text-align:center; opacity:.6; }
+    .qr-placeholder { color:var(--wcp-color-text,#e6edf3); font-size:11px; text-align:center; opacity:.6; }
 
-    .error { color:var(--red); font-size:11px; flex-shrink:0; }
+    .error { color:var(--wcp-color-danger,#f85149); font-size:11px; flex-shrink:0; }
 
     /* Action row — always visible, right-aligned */
     .action-row { display:flex; align-items:center; gap:5px; flex-shrink:0;
-                  border-top:1px solid var(--border); padding-top:6px; justify-content:flex-end; }
+                  border-top:1px solid var(--wcp-color-border,#30363d); padding-top:6px; justify-content:flex-end; }
   </style>
 </head>
 <body>
@@ -187,9 +189,13 @@ function wcpFetch(url, opts) {
     }, '*');
   }
   window.parent?.postMessage({ type: 'wcp:ready' }, '*');
+  window.parent?.postMessage({ type: 'wcp:request-theme' }, '*');
   window.addEventListener('message', e => {
     if (e.data?.type === 'wcp:context' && e.data.theme)
       for (const [k, v] of Object.entries(e.data.theme))
+        document.documentElement.style.setProperty(k, v);
+    if (e.data?.type === 'wcp:theme' && e.data.vars)
+      for (const [k, v] of Object.entries(e.data.vars))
         document.documentElement.style.setProperty(k, v);
   });
 </script>
