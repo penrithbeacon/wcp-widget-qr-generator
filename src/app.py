@@ -97,7 +97,7 @@ WCP_MANIFEST = {
             "path": "/widget/",
             "icon": "/widget/icon.svg",
             "renderMode": "iframe",
-            "defaultSize": {"w": 4, "h": 3},
+            "defaultSize": {"w": 4, "h": 6},
         }
     ],
     "pages": [
