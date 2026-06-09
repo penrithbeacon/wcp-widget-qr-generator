@@ -49,7 +49,8 @@ This widget supports the WCP 2.0.0 request headers:
 |----------|-------------|
 | `GET /wcp` | WCP 2.0.0 Container Directory |
 | `GET /widget/` | Compact widget view (iframe) |
-| `GET /widget/wcp` | WCP 2.0.0 manifest |
+| `GET /widget/wcp` | WCP 2.1.0 manifest |
+| `GET /widget/index` | Widget index — directory of all controls |
 | `GET /widget/health` | Health check |
 | `GET /widget/icon.svg` | Widget icon (SVG) |
 | `GET /widget/full` | Full-page QR generator |
@@ -85,8 +86,8 @@ Response:
 
 | Property | Value |
 |----------|-------|
-| WCP Version | 2.0.0 |
-| Widget Version | 1.3.0 |
+| WCP Version | 2.1.0 |
+| Widget Version | 1.8.0 |
 | Render mode | iframe |
 | Auth | none |
 | Default card size | 4×3 |
@@ -106,6 +107,7 @@ Response:
 | Tag | Description |
 |-----|-------------|
 | `latest` | Latest stable release — multi-arch (`linux/amd64`, `linux/arm64`) |
+| `1.8.0-wcp2.1.0` | Widget v1.8.0, WCP 2.1.0 — `/widget/index` directory page, audit compliance |
 | `1.7.0-wcp2.1.0` | Widget v1.7.0, WCP 2.1.0 — `/widget/health` returns `container` name |
 | `1.6.0-wcp2.1.0` | Widget v1.6.0, WCP 2.1.0 — WCP 2.1.0 upgrade, orchestration ID context |
 | `1.3.0-wcp2.0.0` | Widget v1.3.0, WCP 2.0.0 — container block, manifest image source |
